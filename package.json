@@ -1,0 +1,16 @@
+{
+  "name": "itschool-qa-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Giao dien ITSchool-V1.0 — hoi dap mon Tin hoc lop 3-5",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

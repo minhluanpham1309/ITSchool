@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ITSchool-V1.0</title>
+<meta name="description" content="Hệ thống hỏi đáp môn Tin học lớp 3–5 — demo 6 mô hình Transformer">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>📘</text></svg>">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">ITSchool<span class="brand-ver">V1.0</span></span>
+      <span class="brand-sub">Hỏi đáp môn Tin học lớp 3–5 · 6 mô hình Transformer</span>
+    </div>
+    <div class="topbar-right">
+      <span id="space-badge" class="badge badge-idle" title="Trạng thái HF Space">đang kiểm tra…</span>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Đổi nền sáng/tối">◐</button>
+    </div>
+  </div>
+  <nav class="tabs wrap" role="tablist">
+    <button class="tab" role="tab" data-view="demo" aria-selected="true">Hỏi bài</button>
+    <button class="tab" role="tab" data-view="compare" aria-selected="false">So sánh 6 mô hình</button>
+    <button class="tab" role="tab" data-view="dashboard" aria-selected="false">Kết quả thực nghiệm</button>
+    <button class="tab" role="tab" data-view="dataset" aria-selected="false">Dữ liệu</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ================================================= HỎI BÀI (học sinh) -->
+  <section id="view-demo" class="view" role="tabpanel">
+    <div class="card card-pad">
+      <h1 class="h1">Em muốn hỏi gì về bài học?</h1>
+      <p class="lede">Chọn lớp và bài, rồi gõ câu hỏi. Câu trả lời được tìm trong sách giáo khoa Kết nối tri thức.</p>
+
+      <div class="row">
+        <label class="field">
+          <span>Lớp</span>
+          <select id="demo-grade"></select>
+        </label>
+        <label class="field field-grow">
+          <span>Bài học <small>(để trống để tìm trong cả lớp)</small></span>
+          <select id="demo-lesson"></select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Câu hỏi</span>
+        <div class="ask">
+          <input id="demo-question" type="text" placeholder="Ví dụ: USB là loại thiết bị gì?" autocomplete="off">
+          <button id="demo-ask" class="btn btn-primary" type="button">Trả lời</button>
+        </div>
+      </label>
+
+      <div class="chips">
+        <button class="chip" id="demo-random" type="button">Gợi ý câu khác</button>
+        <span id="demo-suggestions" class="chip-list"></span>
+      </div>
+    </div>
+
+    <div id="demo-result" class="stack" hidden></div>
+  </section>
+
+  <!-- ============================================== SO SÁNH 6 MÔ HÌNH -->
+  <section id="view-compare" class="view" role="tabpanel" hidden>
+    <div class="card card-pad">
+      <h1 class="h1">So sánh câu trả lời của 6 mô hình</h1>
+      <p class="lede">Dán ngữ cảnh và câu hỏi, hoặc nạp một câu từ tập test để đối chiếu với đáp án chuẩn.</p>
+
+      <label class="field">
+        <span>Ngữ cảnh</span>
+        <textarea id="cmp-context" rows="4" placeholder="Đoạn văn trong sách giáo khoa chứa câu trả lời…"></textarea>
+      </label>
+      <label class="field">
+        <span>Câu hỏi</span>
+        <input id="cmp-question" type="text" placeholder="Câu hỏi về đoạn văn trên" autocomplete="off">
+      </label>
+      <label class="field" id="cmp-gold-field" hidden>
+        <span>Đáp án chuẩn</span>
+        <input id="cmp-gold" type="text" readonly>
+      </label>
+
+      <fieldset class="field">
+        <span class="field-legend">Mô hình</span>
+        <div id="cmp-models" class="model-picks"></div>
+      </fieldset>
+
+      <div class="actions">
+        <button id="cmp-run" class="btn btn-primary" type="button">Chạy suy diễn</button>
+        <button id="cmp-load" class="btn" type="button">Nạp câu từ tập test</button>
+        <button id="cmp-clear" class="btn btn-ghost" type="button">Xoá</button>
+      </div>
+    </div>
+
+    <div id="cmp-result" class="stack" hidden></div>
+  </section>
+
+  <!-- ============================================ KẾT QUẢ THỰC NGHIỆM -->
+  <section id="view-dashboard" class="view" role="tabpanel" hidden>
+    <h1 class="h1">Kết quả thực nghiệm</h1>
+    <p class="lede">Đo trên 1.073 câu của tập test, chia theo nhóm ngữ cảnh nên không rò rỉ dữ liệu giữa train và test.</p>
+
+    <div id="dash-tiles" class="tiles"></div>
+
+    <div class="grid-2">
+      <figure class="card card-pad chart-card">
+        <figcaption>
+          <h2 class="h2">Mô hình trích xuất — EM và F1</h2>
+          <p class="note">Tỉ lệ % trên 1.073 câu test. EM là khớp tuyệt đối, F1 là khớp từng từ.</p>
+        </figcaption>
+        <div id="chart-extractive" class="chart"></div>
+      </figure>
+
+      <figure class="card card-pad chart-card">
+        <figcaption>
+          <h2 class="h2">Mô hình sinh tạo — BLEU và ROUGE-L</h2>
+          <p class="note">BLEU đo trùng n-gram, ROUGE-L đo chuỗi con chung dài nhất.</p>
+        </figcaption>
+        <div id="chart-generative" class="chart"></div>
+      </figure>
+    </div>
+
+    <figure class="card card-pad chart-card">
+      <figcaption>
+        <h2 class="h2">Chất lượng theo khối lớp</h2>
+        <p class="note">
+          F1 cho mô hình trích xuất, ROUGE-L cho mô hình sinh tạo. Lớp 3 có nhiều dữ liệu
+          huấn luyện nhất (5.074 câu) nên xu hướng giảm dần theo lớp một phần đến từ
+          khối lượng dữ liệu, không hẳn từ độ khó.
+        </p>
+      </figcaption>
+      <div id="chart-grade" class="chart"></div>
+    </figure>
+
+    <div class="card card-pad">
+      <h2 class="h2">Bảng chỉ số đầy đủ</h2>
+      <div class="table-scroll">
+        <table id="dash-table" class="table"></table>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h2 class="h2">Phân tích lỗi</h2>
+      <p class="note">Các câu tiêu biểu, nhóm theo kiểu lỗi. Bấm vào nhóm để xem.</p>
+      <div id="dash-errors" class="accordion"></div>
+    </div>
+
+    <div class="card card-pad">
+      <h2 class="h2">Kiểm chứng rò rỉ dữ liệu</h2>
+      <div class="table-scroll">
+        <table id="dash-leak" class="table"></table>
+      </div>
+      <p class="note">
+        Đáp án trùng chuỗi ~44% là bình thường chứ không phải rò rỉ: đáp án trung bình
+        chỉ 17 ký tự và cả bộ dữ liệu xoay quanh một số khái niệm cố định.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================================================== DỮ LIỆU -->
+  <section id="view-dataset" class="view" role="tabpanel" hidden>
+    <h1 class="h1">Trình duyệt dữ liệu</h1>
+    <p class="lede" id="ds-lede"></p>
+
+    <div class="card card-pad">
+      <div class="filters">
+        <label class="field"><span>Tìm</span>
+          <input id="ds-q" type="search" placeholder="từ khoá, id, đáp án…" autocomplete="off">
+        </label>
+        <label class="field"><span>Lớp</span><select id="ds-grade"></select></label>
+        <label class="field field-grow"><span>Chủ đề</span><select id="ds-topic"></select></label>
+        <label class="field"><span>Độ khó</span><select id="ds-difficulty"></select></label>
+        <label class="field"><span>Loại câu hỏi</span><select id="ds-type"></select></label>
+        <label class="field"><span>Tập</span><select id="ds-split"></select></label>
+        <button id="ds-reset" class="btn btn-ghost" type="button">Bỏ lọc</button>
+      </div>
+    </div>
+
+    <div id="ds-summary" class="ds-summary"></div>
+    <div id="ds-list" class="stack"></div>
+    <div id="ds-pager" class="pager"></div>
+  </section>
+
+</main>
+
+<footer class="wrap footer">
+  <p>
+    ITSchool-V1.0 — bài FAIR 2026 <em>“Developing an Automatic Question Answering System
+    for Primary-Level Informatics Using Transformer Models”</em>.
+    Dữ liệu từ sách giáo khoa Tin học 3–5 bộ Kết nối tri thức với cuộc sống.
+  </p>
+  <p id="footer-build" class="note"></p>
+</footer>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

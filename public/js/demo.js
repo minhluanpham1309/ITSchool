@@ -112,6 +112,8 @@ function render(target, question, payload) {
 
   // Phan biet hai truong hop rat khac nhau: chua co checkpoint, va mo hinh khong tim ra
   const noCheckpoint = !usable.length && payload.results.every((r) => r.mode === 'unavailable');
+  // Cau hoi co trong sach nhung thuc nghiem khong sinh du doan (tap train/dev)
+  const book = noCheckpoint ? payload.textbook : null;
 
   const card = el('div', { class: 'card card-pad' });
   card.append(
@@ -123,6 +125,7 @@ function render(target, question, payload) {
         class: 'value',
         text:
           primary?.answer ||
+          book?.answer ||
           (noCheckpoint
             ? 'Câu này chưa trả lời được.'
             : 'Chưa tìm được câu trả lời trong bài học này.'),
@@ -130,13 +133,30 @@ function render(target, question, payload) {
     )
   );
 
-  if (noCheckpoint) {
+  if (book) {
+    card.append(
+      el(
+        'div',
+        { class: 'answer-meta' },
+        el('span', { class: 'tag tag-recorded', text: 'đáp án trong sách giáo khoa' }),
+        el('span', { class: 'tag', text: `${book.lesson} · trang ${book.page}` })
+      )
+    );
     card.append(
       el('p', {
         class: 'note',
         text:
-          'Hệ thống chưa nạp checkpoint đã fine-tune, nên hiện chỉ trả lời được 1.073 câu trong tập test của bài báo. ' +
-          'Câu em vừa hỏi không nằm trong số đó.',
+          `Câu này nằm ở tập ${book.split} của bộ dữ liệu. Thực nghiệm chỉ sinh dự đoán cho 1.073 câu ` +
+          'tập test, nên đây là đáp án chuẩn trong sách chứ không phải mô hình trả lời.',
+      })
+    );
+  } else if (noCheckpoint) {
+    card.append(
+      el('p', {
+        class: 'note',
+        text:
+          'Hệ thống chưa nạp checkpoint đã fine-tune, nên hiện chỉ trả lời được các câu có sẵn trong bộ dữ liệu. ' +
+          'Câu em vừa hỏi không khớp câu nào.',
       })
     );
     if (payload.suggestions?.length) {
@@ -179,10 +199,18 @@ function render(target, question, payload) {
   ctxCard.append(
     el('h2', {
       class: 'h2',
-      text: noCheckpoint ? 'Đoạn sách gần nghĩa nhất' : 'Đoạn sách chứa câu trả lời',
+      text: noCheckpoint && !book ? 'Đoạn sách gần nghĩa nhất' : 'Đoạn sách chứa câu trả lời',
     })
   );
-  ctxCard.append(contextBlock(payload.context, primary?.char_start, primary?.char_end, payload.source));
+  ctxCard.append(
+    book
+      ? contextBlock(book.context, book.answerStart, book.answerEnd, {
+          lesson: book.lesson,
+          page: book.page,
+          section: book.section,
+        })
+      : contextBlock(payload.context, primary?.char_start, primary?.char_end, payload.source)
+  );
 
   if (payload.retrieved?.length > 1) {
     const others = el('details', {}, el('summary', { text: `${payload.retrieved.length - 1} đoạn khác cũng gần nghĩa` }));

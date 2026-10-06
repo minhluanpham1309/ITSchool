@@ -110,6 +110,9 @@ function render(target, question, payload) {
   const primary =
     PRIMARY_ORDER.map((key) => usable.find((r) => r.model === key)).find(Boolean) || payload.results[0];
 
+  // Phan biet hai truong hop rat khac nhau: chua co checkpoint, va mo hinh khong tim ra
+  const noCheckpoint = !usable.length && payload.results.every((r) => r.mode === 'unavailable');
+
   const card = el('div', { class: 'card card-pad' });
   card.append(
     el(
@@ -118,10 +121,46 @@ function render(target, question, payload) {
       el('span', { class: 'label', text: 'Câu trả lời' }),
       el('span', {
         class: 'value',
-        text: primary?.answer || 'Chưa tìm được câu trả lời trong bài học này.',
+        text:
+          primary?.answer ||
+          (noCheckpoint
+            ? 'Câu này chưa trả lời được.'
+            : 'Chưa tìm được câu trả lời trong bài học này.'),
       })
     )
   );
+
+  if (noCheckpoint) {
+    card.append(
+      el('p', {
+        class: 'note',
+        text:
+          'Hệ thống chưa nạp checkpoint đã fine-tune, nên hiện chỉ trả lời được 1.073 câu trong tập test của bài báo. ' +
+          'Câu em vừa hỏi không nằm trong số đó.',
+      })
+    );
+    if (payload.suggestions?.length) {
+      const chips = el('div', { class: 'chips' }, el('span', { class: 'note', text: 'Thử câu gần giống:' }));
+      const list = el('span', { class: 'chip-list' });
+      for (const s of payload.suggestions) {
+        list.append(
+          el('button', {
+            class: 'chip',
+            type: 'button',
+            title: `${s.lesson} — đáp án: ${s.gold}`,
+            text: s.question,
+            onclick: () => {
+              $('#demo-question').value = s.question;
+              $('#demo-ask').click();
+            },
+          })
+        );
+      }
+      chips.append(list);
+      card.append(chips);
+    }
+  }
+
   if (primary?.answer) {
     card.append(
       el(
@@ -137,7 +176,12 @@ function render(target, question, payload) {
   card.append(el('p', { class: 'note', text: `Câu hỏi: ${question}` }));
 
   const ctxCard = el('div', { class: 'card card-pad' });
-  ctxCard.append(el('h2', { class: 'h2', text: 'Đoạn sách chứa câu trả lời' }));
+  ctxCard.append(
+    el('h2', {
+      class: 'h2',
+      text: noCheckpoint ? 'Đoạn sách gần nghĩa nhất' : 'Đoạn sách chứa câu trả lời',
+    })
+  );
   ctxCard.append(contextBlock(payload.context, primary?.char_start, primary?.char_end, payload.source));
 
   if (payload.retrieved?.length > 1) {

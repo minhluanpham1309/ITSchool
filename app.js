@@ -22,7 +22,9 @@ const fail = (res, err) => {
 /** Chuyen thang mot duong dan /data/* cua Space ra /api/*. */
 const proxy = (apiPath, spacePath) =>
   app.get(apiPath, async (req, res) => {
-    const qs = new URLSearchParams(req.query).toString();
+    // `path` la tham so catch-all cua Vercel (api/[...path].js), khong phai cua minh
+    const { path: _vercelCatchAll, ...query } = req.query;
+    const qs = new URLSearchParams(query).toString();
     const target = typeof spacePath === 'function' ? spacePath(req) : spacePath;
     try {
       res.json(await hf.data(qs ? `${target}?${qs}` : target));

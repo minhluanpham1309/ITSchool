@@ -12,14 +12,18 @@ trình duyệt  ──►  Vercel (Express)  ──►  HF Space (FastAPI)
                   giao diện + proxy      6 mô hình + dữ liệu
 ```
 
-## Bốn tab
+## Giao diện
 
-| Tab | Việc |
-|---|---|
-| **Hỏi bài** | chế độ cho học sinh — chọn lớp và bài, gõ câu hỏi, nhận đáp án kèm trích dẫn trang sách |
-| **So sánh 6 mô hình** | dán ngữ cảnh + câu hỏi, xem cả sáu mô hình trả lời cạnh nhau, có tô vùng trích xuất |
-| **Kết quả thực nghiệm** | EM/F1/BLEU/ROUGE-L, chất lượng theo khối lớp, phân tích lỗi, kiểm chứng rò rỉ dữ liệu |
-| **Dữ liệu** | lọc và duyệt 10.961 cặp hỏi–đáp, xem dự đoán của 6 mô hình trên từng câu test |
+Một trang duy nhất: chọn lớp và bài, gõ câu hỏi, nhận đáp án kèm đoạn sách và
+trích dẫn trang. Mở phần "Các mô hình trả lời thế nào" để xem từng mô hình.
+
+Thứ tự ưu tiên khi trả lời:
+
+1. Câu nằm trong tập test → dự đoán thật của 6 mô hình từ thực nghiệm
+2. Câu nằm trong tập train/dev → đáp án chuẩn trong sách giáo khoa
+3. Câu hoàn toàn mới → ba gợi ý câu gần nghĩa trong bộ dữ liệu
+
+Mức 3 chỉ biến mất khi Space đã nạp checkpoint fine-tune.
 
 ## Chạy cục bộ
 
@@ -64,7 +68,6 @@ server.js           chạy cục bộ: nạp app.js rồi listen
 api/[...path].js    Vercel Serverless Function, bắt mọi /api/*
 lib/hf.js           client gọi Space, có timeout và thông báo lỗi tiếng Việt
 public/             giao diện — HTML/CSS/JS thuần, không build step
-  js/charts.js      biểu đồ SVG tự viết, bảng màu đã kiểm mù màu, sáng + tối
 scripts/smoke.mjs   gọi lần lượt mọi endpoint
 vercel.json         giới hạn 60s cho function, không cache /api/*
 ```
